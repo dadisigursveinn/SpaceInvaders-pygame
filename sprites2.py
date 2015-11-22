@@ -1,7 +1,17 @@
 # coding: latin-1
 # If you are commenting in icelandic you need the line above.
+import os
 import pygame
 import random
+
+# For points
+def text_Objects(text, color):
+    textSurface = font.render(text, True, color)
+    return textSurface, textSurface.get_rect()
+def message_to_screen(msg, color):
+    textSurface, textRrect = text_Objects(msg, color)
+    textRrect.center = (screen_width/2), 10
+    screen.blit(textSurface, textRrect)
 
 # If we want to use sprites we create a class that inherits from the Sprite class.
 # Each class has an associated image and a rectangle.
@@ -9,6 +19,11 @@ class Asteroid(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = asteroid_image
+        self.rect = self.image.get_rect()
+class Asteroid2(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = asteroid2_image
         self.rect = self.image.get_rect()
 
 class Player(pygame.sprite.Sprite):
@@ -52,18 +67,24 @@ class Missile(pygame.sprite.Sprite):
 player_image = pygame.image.load('images/player_pad.png')
 asteroid_image = pygame.image.load('images/green_ball.png')
 missile_image = pygame.image.load('images/missile.png')
+asteroid2_image = pygame.image.load('images/reen_ball.png')
+
 player_image_left = pygame.image.load('images/player_pad_left.png')
 asteroid_image_left = pygame.image.load('images/green_ball_left.png')
 missile_image_left = pygame.image.load('images/missile_left.png')
+
 player_image_right = pygame.image.load('images/player_pad_right.png')
 asteroid_image_right = pygame.image.load('images/green_ball_right.png')
 missile_image_right = pygame.image.load('images/missile_right.png')
+
 player_image_down = pygame.image.load('images/player_pad_down.png')
 asteroid_image_down = pygame.image.load('images/green_ball_down.png')
 missile_image_down = pygame.image.load('images/missile_down.png')
+
 backround_image = pygame.image.load('images/background.jpg')
 
 WHITE = (255, 255, 255)
+yellow = (255, 255, 20)
 
 pygame.init()
 
@@ -71,9 +92,13 @@ screen_width = 700
 screen_height = 400
 screen = pygame.display.set_mode([screen_width, screen_height])
 
+# Font 
+font = pygame.font.SysFont(None, 25)
+
 # This is a list of 'sprites.' Each block in the program is
 # added to this list. The list is managed by a class called 'Group.'
 asteroid_list = pygame.sprite.Group()
+asteroid_list2 = pygame.sprite.Group()
 # Group to hold missiles
 missile_list = pygame.sprite.Group()
 # This is a list of every sprite.
@@ -83,14 +108,29 @@ all_sprites_list = pygame.sprite.Group()
 # List so missiles dont turn with ship after beeing shot
 old_missiles = pygame.sprite.Group()
 
-for i in range(1):
-    block = Asteroid()
-    # Set a random location for the block
-    block.rect.x = random.randrange(screen_width - 20)
-    block.rect.y = random.randrange(screen_height - 160)  # ekki láta asteroid-ana byrja of neðarlega
+# difficulty increases gradualy
+difficulty = 1
 
-    asteroid_list.add(block)
-    all_sprites_list.add(block)
+def spawn_enemys(diffi):
+    # increase difficulty each round
+    diffi += 1
+    for i in range(2 * difficulty):
+        block = Asteroid()
+        # Set a random location for the block
+        block.rect.x = random.randrange(screen_width - 20)
+        block.rect.y = random.randrange(screen_height - 60) - 400  # ekki láta asteroid-ana byrja of neðarlega
+
+        asteroid_list.add(block)
+        all_sprites_list.add(block)
+    for i in range(difficulty):
+        block = Asteroid2()
+        # Set a random location for the block
+        block.rect.x = random.randrange(screen_width - 20)
+        block.rect.y = random.randrange(screen_height - 60) - 400  # ekki láta asteroid-ana byrja of neðarlega
+
+        asteroid_list2.add(block)
+        all_sprites_list.add(block)
+    return diffi
 
 # Create a player block
 player = Player()
@@ -159,9 +199,11 @@ while not done:
             player.rect.y = - 60
         player.rect.y += 5
 
+    
+
     screen.blit(backround_image, (0, 0))
 
-    print(player.get_dir())
+    message_to_screen("Points: " + str(score), WHITE)
 
     # Below is another good example of Sprite and SpriteGroup functionality.
     # It is now enough to see if some missile has collided with some asteroid
@@ -169,30 +211,46 @@ while not done:
     # In other words:  A missile exploded and so did an asteroid.
 
     # See if the player block has collided with anything.
-    pygame.sprite.groupcollide(missile_list, asteroid_list, True, True)
+    if pygame.sprite.groupcollide(missile_list, asteroid_list, True, True):
+        score += 10
+    if pygame.sprite.groupcollide(missile_list, asteroid_list2, True, True):
+        score += 20
 
     # Missiles move at a constant speed up the screen, towards the enemy
     for shot in missile_list:
         if shot.direction == "UP":
-            shot.rect.y -= 5
+            shot.rect.y -= 8
         if shot.direction == "DOWN":
-            shot.rect.y += 5
+            shot.rect.y += 8
         if shot.direction == "LEFT":
-            shot.rect.x -= 5
+            shot.rect.x -= 8
         if shot.direction == "RIGHT":
-            shot.rect.x += 5
+            shot.rect.x += 8
 
     # All the enemies move down the screen at a constant speed
     for block in asteroid_list:
         block.rect.y += 1
 
-    # End game if there are no more enemyes
+    for block in asteroid_list2:
+        block.rect.y += 2
+
+    # Start next round if there are no more enemyes
     if len(asteroid_list) <= 0:
-        done = True
+        difficulty = spawn_enemys(difficulty)
 
     # Check if enemy chrases into mothership
     if pygame.sprite.spritecollide(player, asteroid_list, True):
         done = True
+    if pygame.sprite.spritecollide(player, asteroid_list2, True):
+        done = True
+
+    # If enemy escapes lose points
+    for enemy in asteroid_list:
+        if enemy.rect.y == screen_height + 40:
+            score -= 200
+    for enemy in asteroid_list2:
+        if enemy.rect.y == screen_height + 40:
+            score -= 200
 
     # Draw all the spites
     all_sprites_list.draw(screen)
