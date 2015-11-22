@@ -16,11 +16,35 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = player_image
         self.rect = self.image.get_rect()
+        self.direction = "UP"
+    def change_dir(self, direction):
+        if direction == "UP":
+            self.image = player_image
+            self.direction = "UP"
+        if direction == "DOWN":
+            self.image = player_image_down
+            self.direction = "DOWN"
+        if direction == "LEFT":
+            self.image = player_image_left
+            self.direction = "LEFT"
+        if direction == "RIGHT":
+            self.image = player_image_right
+            self.direction = "RIGHT"
+    def get_dir(self):
+        return self.direction
+
 
 class Missile(pygame.sprite.Sprite):
     def __init__(self, direct_set):
         pygame.sprite.Sprite.__init__(self)
-        self.image = missile_image
+        if direct_set == "UP":
+            self.image = missile_image
+        if direct_set == "DOWN":
+            self.image = missile_image_down
+        if direct_set == "LEFT":
+            self.image = missile_image_left
+        if direct_set == "RIGHT":
+            self.image = missile_image_right
         self.rect = self.image.get_rect()
         self.direction = direct_set
 
@@ -82,8 +106,7 @@ done = False
 clock = pygame.time.Clock()
 score = 0
 
-# Store direction of ship for missiles direction
-player_direction = "UP"
+
 
 # -------- Main Program Loop -----------
 # We need to check out what happens when the player hits the space bar in order to "shoot".
@@ -95,43 +118,50 @@ while not done:
             done = True
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                if player_direction == "UP":
+                if player.get_dir() == "UP":
                     shot = Missile("UP")
-                if player_direction == "DOWN":
+                    shot.rect.x = player.rect.x 
+                    shot.rect.y = player.rect.y - 20
+                if player.get_dir() == "DOWN":
                     shot = Missile("DOWN")
-                if player_direction == "LEFT":
+                    shot.rect.x = player.rect.x 
+                    shot.rect.y = player.rect.y + 20
+                if player.get_dir() == "LEFT":
                     shot = Missile("LEFT")
-                if player_direction == "RIGHT":
+                    shot.rect.x = player.rect.x - 23
+                    shot.rect.y = player.rect.y - 1
+                if player.get_dir() == "RIGHT":
                     shot = Missile("RIGHT")
-                # shot = Missile()
-                shot.rect.x = player.rect.x + 1
-                shot.rect.y = player.rect.y - 20
+                    shot.rect.x = player.rect.x + 23
+                    shot.rect.y = player.rect.y - 1
                 missile_list.add(shot)
                 all_sprites_list.add(shot)
 
     key = pygame.key.get_pressed()
     if key[pygame.K_LEFT]:
-        player_direction = "LEFT"
+        player.change_dir("LEFT")
         if player.rect.x < -60:
             player.rect.x = 700
         player.rect.x -= 5
     elif key[pygame.K_RIGHT]:
-        player_direction = "RIGHT"
+        player.change_dir("RIGHT")
         if player.rect.x > 700:
             player.rect.x = - 60
         player.rect.x += 5
     if key[pygame.K_UP]:
-        player_direction = "UP"
+        player.change_dir("UP")
         if player.rect.y < -60:
             player.rect.y = 700
         player.rect.y -= 5
     elif key[pygame.K_DOWN]:
-        player_direction = "DOWN"
+        player.change_dir("DOWN")
         if player.rect.y > 700:
             player.rect.y = - 60
         player.rect.y += 5
 
     screen.blit(backround_image, (0, 0))
+
+    print(player.get_dir())
 
     # Below is another good example of Sprite and SpriteGroup functionality.
     # It is now enough to see if some missile has collided with some asteroid
