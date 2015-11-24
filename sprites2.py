@@ -117,7 +117,7 @@ def spawn_enemys(diffi):
     for i in range(2 * difficulty):
         block = Asteroid()
         # Set a random location for the block
-        block.rect.x = random.randrange(screen_width - 20)
+        block.rect.x = random.randrange(screen_width - 40)
         block.rect.y = random.randrange(screen_height - 60) - 400  # ekki láta asteroid-ana byrja of neðarlega
 
         asteroid_list.add(block)
@@ -125,11 +125,12 @@ def spawn_enemys(diffi):
     for i in range(difficulty):
         block = Asteroid2()
         # Set a random location for the block
-        block.rect.x = random.randrange(screen_width - 20)
+        block.rect.x = random.randrange(screen_width - 40)
         block.rect.y = random.randrange(screen_height - 60) - 400  # ekki láta asteroid-ana byrja of neðarlega
 
         asteroid_list2.add(block)
         all_sprites_list.add(block)
+
     return diffi
 
 # Create a player block
@@ -192,18 +193,20 @@ while not done:
         player.change_dir("UP")
         if player.rect.y < -60:
             player.rect.y = 700
-        player.rect.y -= 5
+        if player.rect.y > 0:
+            player.rect.y -= 5
     elif key[pygame.K_DOWN]:
         player.change_dir("DOWN")
         if player.rect.y > 700:
             player.rect.y = - 60
-        player.rect.y += 5
+        if player.rect.y < screen_height - 40:
+            player.rect.y += 5
 
     
 
     screen.blit(backround_image, (0, 0))
 
-    message_to_screen("Points: " + str(score), WHITE)
+    message_to_screen("Points: " + str(score), yellow)
 
     # Below is another good example of Sprite and SpriteGroup functionality.
     # It is now enough to see if some missile has collided with some asteroid
@@ -244,13 +247,15 @@ while not done:
     if pygame.sprite.spritecollide(player, asteroid_list2, True):
         done = True
 
-    # If enemy escapes lose points
-    for enemy in asteroid_list:
+    # If enemy escapes lose points and kill enemy
+    for enemy in asteroid_list: 
         if enemy.rect.y == screen_height + 40:
             score -= 200
+            asteroid_list.remove(enemy)
     for enemy in asteroid_list2:
         if enemy.rect.y == screen_height + 40:
             score -= 200
+            asteroid_list2.remove(enemy)
 
     # Draw all the spites
     all_sprites_list.draw(screen)
